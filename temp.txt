@@ -1,0 +1,106 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <time.h>
+
+#define NUM       5    // 缓冲区大小
+#define NP        3    // 生产者数量
+#define NC        2    // 消费者数量
+
+int buffer[NUM];
+int in = 0;           // 下一个生产位置
+int out = 0;          // 下一个消费位置
+
+sem_t empty;          // 空槽信号量
+sem_t product;        // 产品信号量
+pthread_mutex_t mutex;// 保护 buffer、in、out 的互斥锁
+
+void sys_err(int ret, const char *msg) {
+    fprintf(stderr, "%s: %s\n", msg, strerror(ret));
+    exit(1);
+}
+
+void *producer(void *arg) {
+    long id = (long)arg;
+    srand(time(NULL) ^ id);
+
+    while (1) {
+        int item = rand() % 1000 + 1;
+        // P(empty)
+        sem_wait(&empty);
+
+        // 进入临界区
+        pthread_mutex_lock(&mutex);
+
+        buffer[in] = item;
+        printf("[Producer %ld] produced %d at %d\n", id, item, in);
+        in = (in + 1) % NUM;
+
+        pthread_mutex_unlock(&mutex);
+        // V(product)
+        sem_post(&product);
+
+        sleep(rand() % 3);
+    }
+    return NULL;
+}
+
+void *consumer(void *arg) {
+    long id = (long)arg;
+    srand(time(NULL) ^ id);
+
+    while (1) {
+        // P(product)
+        sem_wait(&product);
+
+        // 进入临界区
+        pthread_mutex_lock(&mutex);
+
+        int item = buffer[out];
+        buffer[out] = 0;
+        printf("    [Consumer %ld] consumed %d from %d\n", id, item, out);
+        out = (out + 1) % NUM;
+
+        pthread_mutex_unlock(&mutex);
+        // V(empty)
+        sem_post(&empty);
+
+        sleep(rand() % 3);
+    }
+    return NULL;
+}
+
+int main(void) {
+    pthread_t ptids[NP], ctids[NC];
+    int ret;
+
+    // 初始化同步原语
+    sem_init(&empty, 0, NUM);
+    sem_init(&product, 0, 0);
+    pthread_mutex_init(&mutex, NULL);
+
+    // 创建生产者线程
+    for (long i = 1; i <= NP; ++i) {
+        ret = pthread_create(&ptids[i-1], NULL, producer, (void *)i);
+        if (ret) sys_err(ret, "pthread_create producer");
+    }
+    // 创建消费者线程
+    for (long i = 1; i <= NC; ++i) {
+        ret = pthread_create(&ctids[i-1], NULL, consumer, (void *)i);
+        if (ret) sys_err(ret, "pthread_create consumer");
+    }
+
+    // 主线程等待（这里让它们无限运行，按 Ctrl+C 退出）
+    for (int i = 0; i < NP; ++i) pthread_join(ptids[i], NULL);
+    for (int i = 0; i < NC; ++i) pthread_join(ctids[i], NULL);
+
+    // 清理
+    sem_destroy(&empty);
+    sem_destroy(&product);
+    pthread_mutex_destroy(&mutex);
+
+    return 0;
+}
