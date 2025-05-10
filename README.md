@@ -1,3 +1,4 @@
+```
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -106,3 +107,4 @@ int main() {
     printf("All producers and consumers have finished.\n");
     return 0;
 }
+```
