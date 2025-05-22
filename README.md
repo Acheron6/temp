@@ -1,4 +1,5 @@
-'''
+```
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <stdlib.h>
@@ -15,7 +16,6 @@
 #define frame_num_FIFO 6
 #define total_instruction 20
 
-/* flag of frame */
 typedef enum {
 	USED,
 	UNUSED
@@ -28,7 +28,6 @@ typedef struct oneframe {
 
 int main() {
 
-	/*********** initialize variable ***********/
 	int i, j, pid, gtid, reid;
 	int access_index = 0;		            // the index of Access_Series
 	int success_flag = false;	            // value is true if page exists
@@ -41,7 +40,6 @@ int main() {
 	int Belady[total_instruction] = { 2, 7, 2, 3, 6, 3, 10, 7, 4, 5, 2, 6, 5, 10, 7, 6, 8, 5, 8, 10 }; // Belady
 	int Equal[total_instruction] = { 5, 1, 10, 2, 5, 1, 2, 2, 1, 10, 10, 6, 7, 2, 8, 5, 4, 8, 8, 8 };
 
-	/*********** initialize memory access series ***********/
 	printf("Do you want to see Belady? (1-yes  2-no)\n");
 	do {
 		printf("Your choice: ");
@@ -63,7 +61,7 @@ int main() {
 	}
 	printf("\n\n");
 
-	/*********** initialize data structure M_Frame ***********/
+
 	for (i = 0; i < frame_num; i++) {
 		M_Frame[i].page_no = 0;
 		M_Frame[i].flag = UNUSED;
@@ -74,7 +72,7 @@ int main() {
 		M_Frame_FIFO[i].flag = UNUSED;
 	}
 
-	/********************** subprocess_FIFO **********************/
+
 	pid = fork();
 
 	if (pid == -1) {
@@ -152,7 +150,7 @@ int main() {
 		printf("* call subprocess_FIFO failed!\n");
 	}
 
-	/********************** subprocess_FIFO_Belady **********************/
+
 	pid = fork();
 
 	if (pid == -1) {
@@ -226,7 +224,7 @@ int main() {
 	reid = wait(NULL);
 	if (reid == -1)
 		printf("* call subprocess_FIFO failed!\n");
-	/********************** subprocess_LRU **********************/
+
 	pid = fork();
 
 	if (pid == -1) // create process error {
@@ -306,4 +304,5 @@ int main() {
 
 	return 0;
 }
-'''
+
+```
